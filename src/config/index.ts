@@ -7,10 +7,12 @@ config({
     path: path.join(__dirname, `../../${envFile}`),
 })
 
-const { PORT, NODE_ENV, DB_URI } = process.env
+const { PORT, NODE_ENV, DB_URI, JWT_SECRET, JWT_REFRESH_SECRET } = process.env
 
 export const CONFIG = {
     PORT,
     NODE_ENV,
     DB_URI,
+    JWT_SECRET,
+    JWT_REFRESH_SECRET,
 }

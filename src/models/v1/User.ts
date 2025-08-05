@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose'
-import { Roles, UserStatus, Languages } from '../constants'
+import { Roles, UserStatus, Languages } from '../../constants'
 
 export interface IUser extends Document {
     name: string
