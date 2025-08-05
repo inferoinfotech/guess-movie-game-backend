@@ -1,6 +1,10 @@
 /* eslint-env node */
 module.exports = {
     extends: ['eslint:recommended', 'plugin:prettier/recommended'],
+    env: {
+        node: true,
+        es2021: true,
+    },
     parser: '@typescript-eslint/parser',
     parserOptions: {
         tsconfigRootDir: __dirname,
