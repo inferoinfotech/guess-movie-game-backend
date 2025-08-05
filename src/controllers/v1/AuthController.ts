@@ -117,4 +117,16 @@ export class AuthController {
             points: user.points,
         }
     }
+
+    async updateProfile(req: any, res: Response, next: NextFunction) {
+        try {
+            const updated = await this.userService.updateById(
+                req.user.id,
+                req.body,
+            )
+            res.status(200).json(updated)
+        } catch (err) {
+            next(err)
+        }
+    }
 }

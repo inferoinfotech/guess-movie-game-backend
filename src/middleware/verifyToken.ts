@@ -1,12 +1,18 @@
 import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
 import { CONFIG } from '../config'
+import { User } from '../models/v1/User'
 
 export interface AuthRequest extends Request {
-    userId?: string
+    user?: {
+        id: string
+        role: string
+        email: string
+        name?: string
+    }
 }
 
-export const verifyToken = (
+export const verifyToken = async (
     req: AuthRequest,
     res: Response,
     next: NextFunction,
@@ -25,18 +31,27 @@ export const verifyToken = (
                 .status(500)
                 .json({ message: 'JWT secret not configured' })
         }
-        const decoded = jwt.verify(token, CONFIG.JWT_SECRET)
-        if (
-            typeof decoded === 'object' &&
-            decoded !== null &&
-            'userId' in decoded &&
-            typeof (decoded as any).userId === 'string'
-        ) {
-            req.userId = (decoded as any).userId
-            next()
-        } else {
-            return res.status(401).json({ message: 'Invalid token payload' })
+
+        const decoded = jwt.verify(token, CONFIG.JWT_SECRET) as {
+            userId: string
         }
+
+        const user = await User.findById(decoded.userId).select(
+            '_id email role firstName lastName',
+        )
+
+        if (!user) {
+            return res.status(401).json({ message: 'User not found' })
+        }
+
+        req.user = {
+            id: (user._id as string).toString(),
+            email: user.email,
+            role: user.role,
+            name: user.name,
+        }
+
+        next()
     } catch (err) {
         return res.status(401).json({ message: 'Invalid or expired token' })
     }

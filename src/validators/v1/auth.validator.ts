@@ -40,3 +40,8 @@ export const loginValidator = checkSchema({
         notEmpty: true,
     },
 })
+
+export const updateProfileValidator = checkSchema({
+    name: { optional: true, trim: true, isString: true },
+    avatar: { optional: true, isURL: true },
+})

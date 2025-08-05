@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express'
 import {
     loginValidator,
     registerValidator,
+    updateProfileValidator,
 } from '../../validators/v1/auth.validator'
 import { AuthController } from '../../controllers/v1/AuthController'
 import logger from '../../config/logger'
@@ -39,7 +40,7 @@ router.get(
     verifyToken,
     async (req: AuthRequest, res: Response, next: NextFunction) => {
         try {
-            const user = await authController.getProfile(req.userId!)
+            const user = await authController.getProfile(req.user?.id!)
             if (!user)
                 return res.status(404).json({ message: 'User not found' })
             res.json(user)
@@ -47,6 +48,14 @@ router.get(
             next(err)
         }
     },
+)
+
+router.patch(
+    '/me',
+    verifyToken,
+    updateProfileValidator,
+    (req: Request, res: Response, next: NextFunction) =>
+        authController.updateProfile(req, res, next),
 )
 
 export default router
