@@ -27,12 +27,12 @@
 
 ## 🎮 Phase 2: Content Management
 
-- [ ] Create Content model
-- [ ] Create Monitor approval logic
-- [ ] Add route: `POST /content`
-- [ ] Add route: `POST /content/verify`
-- [ ] Add route: `GET /content` (filtered & verified only)
-- [ ] Add tests for content APIs
+- [x] Create Content model
+- [x] Create Monitor approval logic
+- [x] Add route: `POST /content`
+- [x] Add route: `POST /content/verify`
+- [x] Add route: `GET /content` (filtered & verified only)
+- [x] Add tests for content APIs
 
 ---
 

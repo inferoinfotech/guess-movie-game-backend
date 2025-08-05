@@ -14,3 +14,15 @@ export enum Languages {
     HI = 'hi',
     // Add more as needed
 }
+
+export enum ContentType {
+    FRAME = 'frame',
+    DIALOGUE = 'dialogue',
+    EYES = 'eyes',
+}
+
+export enum ContentStatus {
+    PENDING = 'pending',
+    APPROVED = 'approved',
+    REJECTED = 'rejected',
+}
