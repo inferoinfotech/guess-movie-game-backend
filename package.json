@@ -1,7 +1,7 @@
 {
-    "name": "auth-service",
+    "name": "guess-movie-game",
     "version": "1.0.0",
-    "description": "This is auth service for mern project",
+    "description": "This is guess movie game backend service",
     "main": "index.js",
     "scripts": {
         "dev": "nodemon ./src/server.ts",
@@ -12,7 +12,7 @@
         "prepare": "husky install",
         "test": "jest --watch --runInBand"
     },
-    "author": "Kevin Chauhan",
+    "author": "Infero Infotech",
     "license": "ISC",
     "lint-staged": {
         "*.ts": [
