@@ -24,3 +24,19 @@ export const registerValidator = checkSchema({
         },
     },
 })
+
+export const loginValidator = checkSchema({
+    email: {
+        errorMessage: 'Email is required',
+        trim: true,
+        notEmpty: true,
+        isEmail: {
+            errorMessage: 'Invalid email',
+        },
+    },
+    password: {
+        errorMessage: 'Password is required',
+        trim: true,
+        notEmpty: true,
+    },
+})

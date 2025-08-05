@@ -1,5 +1,8 @@
 import { Router, Request, Response, NextFunction } from 'express'
-import { registerValidator } from '../../validators/v1/auth.validator'
+import {
+    loginValidator,
+    registerValidator,
+} from '../../validators/v1/auth.validator'
 import { AuthController } from '../../controllers/v1/AuthController'
 import logger from '../../config/logger'
 import { CredentialService } from '../../services/CredentialService'
@@ -21,6 +24,13 @@ router.post(
     registerValidator,
     (req: Request, res: Response, next: NextFunction) =>
         authController.register(req, res, next),
+)
+
+router.post(
+    '/login',
+    loginValidator,
+    (req: Request, res: Response, next: NextFunction) =>
+        authController.login(req, res, next),
 )
 
 export default router

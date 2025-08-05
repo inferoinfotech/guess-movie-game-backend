@@ -56,4 +56,51 @@ export class AuthController {
             return next(err)
         }
     }
+
+    async login(req: Request, res: Response, next: NextFunction) {
+        try {
+            const errors = validationResult(req)
+            if (!errors.isEmpty()) {
+                return res.status(400).json({ errors: errors.array() })
+            }
+
+            const { email, password } = req.body
+
+            const user = await this.userService.findByEmail(email)
+            if (!user) {
+                return res
+                    .status(401)
+                    .json({ message: 'Invalid email or password' })
+            }
+
+            const isMatch = await this.credentialService.comparePassword(
+                password,
+                user.password,
+            )
+            if (!isMatch) {
+                return res
+                    .status(401)
+                    .json({ message: 'Invalid email or password' })
+            }
+
+            const accessToken = this.tokenService.generateAccessToken(
+                String(user._id),
+            )
+
+            return res.status(200).json({
+                user: {
+                    id: user._id,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                    language: user.language,
+                    points: user.points,
+                },
+                accessToken,
+            })
+        } catch (err) {
+            this.logger.error('Error in login:', err)
+            return next(err)
+        }
+    }
 }
