@@ -103,4 +103,18 @@ export class AuthController {
             return next(err)
         }
     }
+
+    async getProfile(userId: string) {
+        const user = await this.userService.findById(userId)
+        if (!user) return null
+
+        return {
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            language: user.language,
+            points: user.points,
+        }
+    }
 }

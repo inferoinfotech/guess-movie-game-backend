@@ -9,4 +9,8 @@ export class UserService {
         const user = new User(data)
         return user.save()
     }
+
+    async findById(id: string): Promise<IUser | null> {
+        return User.findById(id)
+    }
 }

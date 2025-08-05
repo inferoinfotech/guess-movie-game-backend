@@ -15,13 +15,13 @@
 
 - [x] Create User model (Mongoose)
 - [x] Create register controller
-- [ ] Create login controller
-- [ ] Setup JWT utils (sign/verify)
-- [ ] Set access/refresh token in cookies
-- [ ] Add token verification middleware
-- [ ] Add route: `GET /auth/me`
-- [ ] Add logout route (clear cookies)
-- [ ] Add tests for all auth routes
+- [x] Create login controller
+- [x] Setup JWT utils (sign/verify)
+- [x] Set access/refresh token in cookies
+- [x] Add token verification middleware
+- [x] Add route: `GET /auth/me`
+- [x] Add logout route (clear cookies)
+- [x] Add tests for all auth routes
 
 ---
 
