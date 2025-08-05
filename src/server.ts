@@ -1,11 +1,13 @@
 import { CONFIG } from './config'
 import app from './app'
 import logger from './config/logger'
+import { initDb } from './config/db'
 
 const PORT = CONFIG.PORT || 8000
 
 const startServer = async (port: number) => {
     try {
+        await initDb()
         app.listen(port, () => {
             logger.info(`Listening on port ${port}`)
         })
