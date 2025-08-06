@@ -1,5 +1,6 @@
 import { Request, Response } from 'express'
 import Content from '../../models/v1/Content'
+import mongoose from 'mongoose'
 
 export class GameController {
     getSinglePlayerQuestions = async (req: Request, res: Response) => {
@@ -37,6 +38,47 @@ export class GameController {
             return res.status(500).json({
                 success: false,
                 message: 'Failed to fetch single-player questions',
+            })
+        }
+    }
+
+    submitSinglePlayerAnswer = async (req: Request, res: Response) => {
+        try {
+            const { questionId, userAnswer } = req.body
+
+            if (!questionId || !userAnswer) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'questionId and userAnswer are required',
+                })
+            }
+
+            const question = await Content.findOne({
+                _id: new mongoose.Types.ObjectId(questionId),
+                status: 'approved',
+            })
+
+            if (!question) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Question not found',
+                })
+            }
+
+            const correctAnswer = question.answer.trim().toLowerCase()
+            const userInput = userAnswer.trim().toLowerCase()
+
+            const isCorrect = correctAnswer === userInput
+
+            return res.status(200).json({
+                success: true,
+                isCorrect,
+                correctAnswer: question.answer, // Optional: remove if you don’t want to reveal
+            })
+        } catch (err) {
+            return res.status(500).json({
+                success: false,
+                message: 'Something went wrong while validating answer',
             })
         }
     }

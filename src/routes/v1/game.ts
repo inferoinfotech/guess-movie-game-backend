@@ -4,8 +4,17 @@ import { verifyToken } from '../../middleware/verifyToken'
 
 const router = express.Router()
 
-const { getSinglePlayerQuestions } = new GameController()
+const gameController = new GameController()
 
-router.get('/single-player', verifyToken, getSinglePlayerQuestions)
+router.get(
+    '/single-player',
+    verifyToken,
+    gameController.getSinglePlayerQuestions,
+)
+router.post(
+    '/single-player/submit',
+    verifyToken,
+    gameController.submitSinglePlayerAnswer,
+)
 
 export default router
