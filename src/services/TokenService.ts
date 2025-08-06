@@ -3,7 +3,7 @@ import { CONFIG } from '../config'
 
 export class TokenService {
     generateAccessToken(userId: string): string {
-        return jwt.sign({ userId }, CONFIG.JWT_SECRET!, { expiresIn: '15m' })
+        return jwt.sign({ userId }, CONFIG.JWT_SECRET!, { expiresIn: '1y' })
     }
 
     generateRefreshToken(userId: string): string {

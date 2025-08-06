@@ -6,9 +6,14 @@ import { ContentStatus, ContentType } from '../../constants'
 export class ContentController {
     createContent = async (req: AuthRequest, res: Response) => {
         try {
-            const { type, answer, questionText, imageUrl } = req.body
+            const { type, answer, questionText, imageUrl, options } = req.body
 
-            if (!type || !answer || (!questionText && !imageUrl)) {
+            if (
+                !type ||
+                !answer ||
+                (!questionText && !imageUrl) ||
+                (options && !Array.isArray(options))
+            ) {
                 return res
                     .status(400)
                     .json({ message: 'Missing required fields' })

@@ -10,6 +10,7 @@ export interface IContent extends Document {
     createdBy: mongoose.Types.ObjectId
     createdAt: Date
     updatedAt: Date
+    options?: string[]
 }
 
 const ContentSchema = new Schema<IContent>(
@@ -34,6 +35,10 @@ const ContentSchema = new Schema<IContent>(
         answer: {
             type: String,
             required: true,
+        },
+        options: {
+            type: [String],
+            default: [],
         },
         status: {
             type: String,
