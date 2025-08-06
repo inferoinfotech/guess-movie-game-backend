@@ -46,4 +46,84 @@ export class MultiplayerController {
             })
         }
     }
+
+    joinRoom = async (req: any, res: Response) => {
+        try {
+            const { roomCode } = req.body
+            const userId = req.user.id
+
+            const room = await Room.findOne({ code: roomCode })
+
+            if (!room) {
+                return res
+                    .status(404)
+                    .json({ success: false, message: 'Room not found' })
+            }
+
+            // Prevent joining after game started
+            if (room.isStarted) {
+                return res
+                    .status(400)
+                    .json({ success: false, message: 'Game already started' })
+            }
+
+            // Prevent duplicate join
+            const alreadyJoined = room.participants.some(
+                (p) => p.user?.toString() === userId,
+            )
+            if (alreadyJoined) {
+                return res
+                    .status(400)
+                    .json({ success: false, message: 'Already joined' })
+            }
+
+            room.participants.push({ user: userId })
+            await room.save()
+
+            return res.status(200).json({ success: true, data: room })
+        } catch (err) {
+            return res
+                .status(500)
+                .json({ success: false, message: 'Error joining room' })
+        }
+    }
+
+    startGame = async (req: any, res: Response) => {
+        try {
+            const { roomCode } = req.body
+            const userId = req.user.id
+
+            const room = await Room.findOne({ code: roomCode })
+
+            if (!room) {
+                return res
+                    .status(404)
+                    .json({ success: false, message: 'Room not found' })
+            }
+
+            if (room.leader.toString() !== userId) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Only leader can start the game',
+                })
+            }
+
+            if (room.isStarted) {
+                return res
+                    .status(400)
+                    .json({ success: false, message: 'Game already started' })
+            }
+
+            room.isStarted = true
+            await room.save()
+
+            return res
+                .status(200)
+                .json({ success: true, message: 'Game started successfully' })
+        } catch (err) {
+            return res
+                .status(500)
+                .json({ success: false, message: 'Error starting game' })
+        }
+    }
 }
