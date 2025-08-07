@@ -13,6 +13,8 @@ export const setupSocket = (io: Server) => {
         }
 
         const userId = decoded.userId
+        // disconnect event
+        const disconnectedUsers = new Map() // userId => timeoutId
 
         // === CREATE ROOM ===
         socket.on('create-room', ({ roomCode }, callback) => {
@@ -86,6 +88,78 @@ export const setupSocket = (io: Server) => {
             io.to(roomCode).emit('room-update', {
                 users: usersInRoom,
             })
+        })
+
+        // === REJOIN ROOM ===
+        socket.on('rejoin-room', ({ roomCode }, callback) => {
+            const timeoutId = disconnectedUsers.get(userId)
+            if (timeoutId) {
+                clearTimeout(timeoutId)
+                disconnectedUsers.delete(userId)
+            }
+
+            socket.join(roomCode)
+            socket.data = { userId, roomCode, isLeader: false }
+
+            const room = io.sockets.adapter.rooms.get(roomCode)
+            const usersInRoom = room
+                ? Array.from(room)
+                      .map((socketId) => {
+                          const s = io.sockets.sockets.get(socketId)
+                          return s?.data?.userId
+                              ? {
+                                    userId: userId,
+                                    isLeader: s.data.isLeader,
+                                }
+                              : null
+                      })
+                      .filter(Boolean)
+                : []
+
+            io.to(roomCode).emit('room-update', {
+                users: usersInRoom,
+                message: `${socket.data.userId} rejoined the room.`,
+            })
+
+            callback?.({
+                status: 'success',
+                message: `Welcome back, ${socket.data.userId}!`,
+            })
+        })
+
+        // === DISCONNECT EVENT ===
+        socket.on('disconnect', () => {
+            const { roomCode, username } = socket.data || {}
+            if (!roomCode) return
+
+            const timeoutId = setTimeout(() => {
+                socket.leave(roomCode)
+
+                const room = io.sockets.adapter.rooms.get(roomCode)
+                const usersInRoom = room
+                    ? Array.from(room)
+                          .map((socketId) => {
+                              const s = io.sockets.sockets.get(socketId)
+                              return s?.data?.userId
+                                  ? {
+                                        userId: userId,
+                                        isLeader: s.data.isLeader,
+                                    }
+                                  : null
+                          })
+                          .filter(Boolean)
+                    : []
+
+                io.to(roomCode).emit('room-update', {
+                    users: usersInRoom,
+                    message: `${username} left the room.`,
+                })
+
+                disconnectedUsers.delete(userId)
+            }, 10000) // 10 seconds grace period
+
+            disconnectedUsers.set(userId, timeoutId)
+            console.log(disconnectedUsers)
         })
     })
 }
