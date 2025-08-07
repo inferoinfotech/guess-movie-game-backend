@@ -1,9 +1,10 @@
 import { Server, Socket } from 'socket.io'
 import { verifyJwt } from '../utils/jwt' // make sure you have this
-import { decode } from 'punycode'
+let ioInstance: Server
 
-export const setupSocket = (io: Server) => {
-    io.on('connection', (socket: Socket) => {
+export const setupSocket = (server: Server) => {
+    ioInstance = server
+    ioInstance.on('connection', (socket: Socket) => {
         const token =
             socket.handshake.auth?.token || socket.handshake.headers?.token
         const decoded = verifyJwt(token) as any
@@ -29,15 +30,15 @@ export const setupSocket = (io: Server) => {
                 })
             }
 
-            io.to(roomCode).emit('room-update', {
+            ioInstance.to(roomCode).emit('room-update', {
                 users: [{ userId, isLeader: true }],
             })
         })
 
         // === JOIN ROOM ===
         socket.on('join-room', ({ roomCode }, callback) => {
-            const room = io.sockets.adapter.rooms.get(roomCode)
-            console.log(io.sockets.adapter.rooms)
+            const room = ioInstance.sockets.adapter.rooms.get(roomCode)
+            console.log(ioInstance.sockets.adapter.rooms)
             if (!room) {
                 if (typeof callback === 'function') {
                     return callback({
@@ -50,7 +51,7 @@ export const setupSocket = (io: Server) => {
 
             // Prevent duplicate userId in same room
             const isUserAlreadyInRoom = Array.from(room).some((socketId) => {
-                const s = io.sockets.sockets.get(socketId)
+                const s = ioInstance.sockets.sockets.get(socketId)
                 return s?.data?.userId === userId
             })
 
@@ -78,14 +79,14 @@ export const setupSocket = (io: Server) => {
             // Get all users in room
             const usersInRoom = Array.from(room)
                 .map((socketId) => {
-                    const s = io.sockets.sockets.get(socketId)
+                    const s = ioInstance.sockets.sockets.get(socketId)
                     return s?.data
                         ? { userId: s.data.userId, isLeader: s.data.isLeader }
                         : null
                 })
                 .filter(Boolean)
 
-            io.to(roomCode).emit('room-update', {
+            ioInstance.to(roomCode).emit('room-update', {
                 users: usersInRoom,
             })
         })
@@ -101,11 +102,11 @@ export const setupSocket = (io: Server) => {
             socket.join(roomCode)
             socket.data = { userId, roomCode, isLeader: false }
 
-            const room = io.sockets.adapter.rooms.get(roomCode)
+            const room = ioInstance.sockets.adapter.rooms.get(roomCode)
             const usersInRoom = room
                 ? Array.from(room)
                       .map((socketId) => {
-                          const s = io.sockets.sockets.get(socketId)
+                          const s = ioInstance.sockets.sockets.get(socketId)
                           return s?.data?.userId
                               ? {
                                     userId: userId,
@@ -116,7 +117,7 @@ export const setupSocket = (io: Server) => {
                       .filter(Boolean)
                 : []
 
-            io.to(roomCode).emit('room-update', {
+            ioInstance.to(roomCode).emit('room-update', {
                 users: usersInRoom,
                 message: `${socket.data.userId} rejoined the room.`,
             })
@@ -135,11 +136,11 @@ export const setupSocket = (io: Server) => {
             const timeoutId = setTimeout(() => {
                 socket.leave(roomCode)
 
-                const room = io.sockets.adapter.rooms.get(roomCode)
+                const room = ioInstance.sockets.adapter.rooms.get(roomCode)
                 const usersInRoom = room
                     ? Array.from(room)
                           .map((socketId) => {
-                              const s = io.sockets.sockets.get(socketId)
+                              const s = ioInstance.sockets.sockets.get(socketId)
                               return s?.data?.userId
                                   ? {
                                         userId: userId,
@@ -150,7 +151,7 @@ export const setupSocket = (io: Server) => {
                           .filter(Boolean)
                     : []
 
-                io.to(roomCode).emit('room-update', {
+                ioInstance.to(roomCode).emit('room-update', {
                     users: usersInRoom,
                     message: `${username} left the room.`,
                 })
@@ -163,3 +164,5 @@ export const setupSocket = (io: Server) => {
         })
     })
 }
+
+export { ioInstance as io }

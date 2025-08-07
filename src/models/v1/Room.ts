@@ -1,6 +1,30 @@
-import mongoose from 'mongoose'
+import mongoose, { Document, Types } from 'mongoose'
 
-const roomSchema = new mongoose.Schema(
+export interface RoomSettings {
+    rounds: number
+    timePerQuestion: number
+    questionTypes: string[] // ['dialogue', 'frame', 'eyes']
+    language: string
+}
+
+export interface RoomParticipant {
+    user: Types.ObjectId
+    joinedAt: Date
+}
+
+export interface RoomDocument extends Document {
+    name?: string
+    code: string
+    leader: Types.ObjectId
+    participants: RoomParticipant[]
+    settings: RoomSettings
+    isStarted: boolean
+    isEnded: boolean
+    createdAt: Date
+    updatedAt: Date
+}
+
+const roomSchema = new mongoose.Schema<RoomDocument>(
     {
         name: { type: String },
         code: { type: String, required: true, unique: true }, // NEW
@@ -30,4 +54,4 @@ const roomSchema = new mongoose.Schema(
     { timestamps: true },
 )
 
-export default mongoose.model('Room', roomSchema)
+export default mongoose.model<RoomDocument>('Room', roomSchema)

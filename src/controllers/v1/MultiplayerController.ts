@@ -1,6 +1,9 @@
 import { Request, Response } from 'express'
 import Room from '../../models/v1/Room'
 import { generateRoomCode } from '../../utils/generateRoomCode'
+import { io } from '../../socket'
+import logger from '../../config/logger'
+import { roomGames, sendNextQuestion } from '../../socket/gameEngine'
 
 export class MultiplayerController {
     createRoom = async (req: any, res: Response) => {
@@ -77,7 +80,10 @@ export class MultiplayerController {
                     .json({ success: false, message: 'Already joined' })
             }
 
-            room.participants.push({ user: userId })
+            room.participants.push({
+                user: userId,
+                joinedAt: new Date(),
+            })
             await room.save()
 
             return res.status(200).json({ success: true, data: room })
@@ -117,10 +123,38 @@ export class MultiplayerController {
             room.isStarted = true
             await room.save()
 
+            // Emit event to all participants
+            io.to(roomCode).emit('game-started', {
+                message: 'Game has started!',
+                round: 1,
+                totalRounds: room?.settings?.rounds,
+                countdownBeforeStart: 5, // optional: send this info to client
+            })
+
+            // Initialize game state
+            roomGames.set(room.code, {
+                round: 0, // starts at 0, will increment to 1 in sendNextQuestion
+                maxRounds: room.settings.rounds,
+                players: room.participants.map((p) => ({
+                    userId: p.user.toString(),
+                    username: '', // optionally fetch username here
+                    score: 0,
+                    socketId: '', // optionally attach when player joins socket
+                })),
+                answered: new Set(),
+                currentQuestion: null,
+            })
+
+            // ⏳ Wait 5 seconds before round 1 begins
+            setTimeout(() => {
+                sendNextQuestion(roomCode)
+            }, 5000)
+
             return res
                 .status(200)
                 .json({ success: true, message: 'Game started successfully' })
         } catch (err) {
+            console.log(err)
             return res
                 .status(500)
                 .json({ success: false, message: 'Error starting game' })
