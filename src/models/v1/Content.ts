@@ -7,6 +7,7 @@ export interface IContent extends Document {
     imageUrl?: string
     answer: string
     status: ContentStatus
+    isApproved: Boolean
     createdBy: mongoose.Types.ObjectId
     createdAt: Date
     updatedAt: Date
@@ -44,6 +45,10 @@ const ContentSchema = new Schema<IContent>(
             type: String,
             enum: Object.values(ContentStatus),
             default: ContentStatus.PENDING,
+        },
+        isApproved: {
+            type: Boolean,
+            default: false,
         },
         createdBy: {
             type: mongoose.Schema.Types.ObjectId,
