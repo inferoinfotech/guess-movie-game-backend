@@ -1,5 +1,6 @@
 import { Server, Socket } from 'socket.io'
 import { verifyJwt } from '../utils/jwt' // make sure you have this
+import { roomGames } from './gameEngine'
 let ioInstance: Server
 
 export const setupSocket = (server: Server) => {
@@ -126,6 +127,30 @@ export const setupSocket = (server: Server) => {
                 status: 'success',
                 message: `Welcome back, ${socket.data.userId}!`,
             })
+        })
+
+        // === SUBMIT ANSWER ===
+        socket.on('submit-answer', ({ roomCode, answer }) => {
+            const game = roomGames.get(roomCode)
+            if (!game) return
+            console.log('answer--->', game.players)
+            const player = game.players.find((p) => p.userId === userId)
+            if (!player) return
+
+            // Prevent duplicate submissions
+            if (game.answered.has(userId)) return
+
+            game.answered.add(userId)
+            player.latestAnswer = answer
+
+            console.log(`[Answer] ${player.username} answered: ${answer}`)
+
+            // If all players have answered, end round early
+            if (game.answered.size === game.players.length) {
+                console.log(
+                    `[Round] All users submitted early. Waiting for timer to end...`,
+                )
+            }
         })
 
         // === DISCONNECT EVENT ===
