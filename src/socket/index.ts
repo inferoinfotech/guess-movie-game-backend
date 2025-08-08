@@ -1,6 +1,6 @@
 import { Server, Socket } from 'socket.io'
 import { verifyJwt } from '../utils/jwt' // make sure you have this
-import { roomGames } from './gameEngine'
+import { endRound, roomGames } from './gameEngine'
 let ioInstance: Server
 
 export const setupSocket = (server: Server) => {
@@ -150,6 +150,50 @@ export const setupSocket = (server: Server) => {
                 console.log(
                     `[Round] All users submitted early. Waiting for timer to end...`,
                 )
+            }
+        })
+
+        // === LEAVE ROOM ===
+        socket.on('leave-room', ({ roomCode }, callback) => {
+            const game = roomGames.get(roomCode)
+
+            // Remove player from roomGame if game exists
+            if (game) {
+                game.players = game.players.filter((p) => p.userId !== userId)
+                game.answered.delete(userId)
+
+                // Optional: If no players left, clean up game
+                if (game.players.length === 0) {
+                    roomGames.delete(roomCode)
+                }
+
+                // Optional: If all remaining players have answered, end the round
+                if (
+                    game.players.length > 0 &&
+                    game.answered.size === game.players.length
+                ) {
+                    if (game.timeout) clearTimeout(game.timeout)
+                    endRound(roomCode)
+                }
+            }
+
+            socket.leave(roomCode)
+
+            // Notify others
+            ioInstance.to(roomCode).emit('room-update', {
+                message: `User ${userId} has left the room.`,
+                users:
+                    game?.players.map((p) => ({
+                        userId: p.userId,
+                        username: p.username,
+                    })) || [],
+            })
+
+            if (typeof callback === 'function') {
+                callback({
+                    status: 'success',
+                    message: 'You have left the room.',
+                })
             }
         })
 
