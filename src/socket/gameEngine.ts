@@ -69,6 +69,21 @@ export async function endRound(roomCode: string) {
 
     console.log(`[End Round] Ending round ${game.round} in room ${roomCode}`)
 
+    if (game.round >= game.maxRounds) {
+        io.to(roomCode).emit('game-over', {
+            leaderboard: game.players
+                .map((p) => ({
+                    username: p.username,
+                    score: p.score,
+                }))
+                .sort((a, b) => b.score - a.score), // sort high to low
+            message: 'Game Over!',
+        })
+
+        roomGames.delete(roomCode) // cleanup
+        return
+    }
+
     const correctAnswer = game.currentQuestion?.answer
     const resultPerPlayer: {
         userId: string
