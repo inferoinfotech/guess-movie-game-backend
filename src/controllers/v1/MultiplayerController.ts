@@ -142,7 +142,9 @@ export class MultiplayerController {
                     socketId: '', // optionally attach when player joins socket
                 })),
                 answered: new Set(),
+                usedQuestionIds: new Set(),
                 currentQuestion: null,
+                correctAnswer: '',
             })
 
             // ⏳ Wait 5 seconds before round 1 begins

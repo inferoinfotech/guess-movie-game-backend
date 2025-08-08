@@ -14,7 +14,9 @@ type RoomGameState = {
         latestAnswer?: string
     }[]
     answered: Set<string>
+    usedQuestionIds: Set<string>
     currentQuestion: any
+    correctAnswer: string
     timeout?: NodeJS.Timeout
 }
 
@@ -30,11 +32,12 @@ export async function sendNextQuestion(roomCode: string) {
 
         game.round += 1
         const { language, questionTypes } = room.settings
-        const question = await getRandomQuestion({
+        const question: any = await getRandomQuestion({
             language,
             types: questionTypes,
         })
         game.currentQuestion = question
+        game.correctAnswer = question.answer
         game.answered = new Set()
 
         io.to(roomCode).emit('next-question', {
@@ -52,7 +55,6 @@ export async function sendNextQuestion(roomCode: string) {
         if (game.timeout) clearTimeout(game.timeout)
 
         game.timeout = setTimeout(() => {
-            // will implement this later
             console.log(
                 `[Timer] Round ${game.round} ended for room ${roomCode}`,
             )
@@ -95,40 +97,44 @@ export async function endRound(roomCode: string) {
 
     for (const player of game.players) {
         const didAnswer = game.answered.has(player.userId)
-        const submittedCorrectly = player.latestAnswer === correctAnswer
+        const isCorrect =
+            didAnswer &&
+            player.latestAnswer?.trim().toLowerCase() ===
+                correctAnswer?.trim().toLowerCase()
 
-        if (didAnswer && submittedCorrectly) {
+        if (isCorrect) {
             player.score += 1
         }
 
-        resultPerPlayer.push({
+        const result = {
             userId: player.userId,
             username: player.username,
             answered: didAnswer,
-            correct: didAnswer && submittedCorrectly,
+            correct: isCorrect,
             score: player.score,
-        })
+        }
 
-        // Clear latestAnswer for next round
         player.latestAnswer = undefined
+        return result
     }
 
-    // Emit round result
     io.to(roomCode).emit('round-result', {
         round: game.round,
         correctAnswer,
         results: resultPerPlayer,
     })
 
-    // Proceed to next round after short delay (e.g., 5 sec)
+    // Game over
     if (game.round >= game.maxRounds) {
         io.to(roomCode).emit('game-over', {
             leaderboard: resultPerPlayer.sort((a, b) => b.score - a.score),
+            message: 'Game Over!',
         })
-        roomGames.delete(roomCode) // Clean up game state
+        roomGames.delete(roomCode)
     } else {
+        // Proceed to next round
         setTimeout(() => {
             sendNextQuestion(roomCode)
-        }, 5000) // Delay before next question
+        }, 5000)
     }
 }

@@ -1,25 +1,39 @@
-import Content from '../models/v1/Content' // your content model
+import Content from '../models/v1/Content'
 
 type GetRandomQuestionOptions = {
     language: string
     types: string[] // ['dialogue', 'frame', 'eyes']
+    excludeIds?: string[]
 }
 
 export async function getRandomQuestion(options: GetRandomQuestionOptions) {
-    const { language, types } = options
+    const { language, types, excludeIds = [] } = options
 
-    // Match filter
-    const match = {
+    const baseMatch = {
         type: { $in: types },
-        isApproved: true, // if you have a moderation flag
+        isApproved: true,
     }
 
-    const count = await Content.countDocuments(match)
-    if (count === 0) return null
+    const tryGetQuestion = async (match: any) => {
+        const count = await Content.countDocuments(match)
+        if (count === 0) return null
+        const random = Math.floor(Math.random() * count)
+        const [question] = await Content.find(match).skip(random).limit(1)
+        return question
+    }
 
-    const random = Math.floor(Math.random() * count)
+    // Step 1: Try unique question
+    const uniqueMatch = excludeIds.length
+        ? { ...baseMatch, _id: { $nin: excludeIds } }
+        : baseMatch
 
-    const [question] = await Content.find(match).skip(random).limit(1)
+    const uniqueQuestion = await tryGetQuestion(uniqueMatch)
+    if (uniqueQuestion) return uniqueQuestion
 
-    return question
+    // Step 2: Fallback — allow repeats
+    console.warn(
+        '⚠️ No unique questions found. Falling back to repeated questions.',
+    )
+    const fallbackQuestion = await tryGetQuestion(baseMatch)
+    return fallbackQuestion
 }
